@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ledger — Grade Calculator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F2EFE4;
+    --paper-raised:#FAF8F0;
+    --ink:#262420;
+    --ink-soft:#5B584F;
+    --rule:#D9D3C2;
+    --rule-strong:#C3BBA4;
+    --stamp:#A54428;
+    --stamp-bg:#F4E3DB;
+    --sage:#4F6B48;
+    --sage-bg:#E3EBDE;
+    --ochre:#96702C;
+    --ochre-bg:#F3E7CF;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Inter',system-ui,sans-serif;
+    line-height:1.5;
+    background-image:linear-gradient(var(--rule) 1px, transparent 1px);
+    background-size:100% 42px;
+  }
+  .wrap{ max-width:820px; margin:0 auto; padding:44px 26px 80px; }
+  header{
+    display:flex; align-items:baseline; justify-content:space-between;
+    border-bottom:2px solid var(--ink); padding-bottom:14px; margin-bottom:20px;
+  }
+  h1{ font-family:'Special Elite', monospace; font-weight:400; font-size:26px; letter-spacing:0.5px; margin:0; }
+  .ledger-no{ font-family:'JetBrains Mono', monospace; font-size:12px; color:var(--ink-soft); }
+  .tabs{ display:flex; gap:6px; flex-wrap:wrap; margin-bottom:26px; align-items:center; }
+  .tab{
+    font-family:'JetBrains Mono', monospace; font-size:13px;
+    padding:7px 14px; border:1px solid var(--rule-strong); border-radius:2px;
+    background:var(--paper-raised); cursor:pointer; color:var(--ink-soft);
+  }
+  .tab.active{ border-color:var(--ink); color:var(--ink); font-weight:500; }
+  .tab-add{
+    font-family:'Inter',sans-serif; font-size:13px; padding:7px 12px;
+    border:1px dashed var(--rule-strong); border-radius:2px; background:none;
+    cursor:pointer; color:var(--ink-soft);
+  }
+  .tab-add:hover{ border-color:var(--ink); color:var(--ink); }
+  .class-name-row{ display:flex; align-items:center; gap:10px; margin-bottom:18px; }
+  .class-name-row input{
+    font-family:'Special Elite', monospace; font-size:17px; background:none;
+    border:none; border-bottom:1px dashed var(--rule-strong); color:var(--ink);
+    padding:4px 2px; flex:1;
+  }
+  .class-name-row input:focus{ outline:none; border-bottom:1px solid var(--stamp); }
+  .del-class{
+    background:none; border:1px solid var(--rule-strong); color:var(--ink-soft);
+    font-size:12px; padding:5px 10px; border-radius:2px; cursor:pointer;
+    font-family:'JetBrains Mono', monospace;
+  }
+  .del-class:hover{ border-color:var(--stamp); color:var(--stamp); }
+  section{
+    background:var(--paper-raised); border:1px solid var(--rule-strong); border-radius:2px;
+    padding:22px 22px 20px; margin-bottom:26px; box-shadow:0 1px 0 var(--rule);
+  }
+  .section-label{
+    font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:1.5px;
+    text-transform:uppercase; color:var(--ink-soft); margin:0 0 4px;
+  }
+  h2{ font-family:'Special Elite', monospace; font-weight:400; font-size:18px; margin:0 0 16px; }
+  .category{ border:1px solid var(--rule); border-radius:2px; padding:14px 16px 12px; margin-bottom:16px; background:var(--paper); }
+  .cat-head{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:10px; }
+  .cat-head input[type="text"]{
+    font-family:'Inter',sans-serif; font-weight:600; font-size:14px; background:none;
+    border:none; border-bottom:1px dashed var(--rule-strong); padding:3px 2px; flex:1; min-width:120px; color:var(--ink);
+  }
+  .cat-head input[type="text"]:focus{ outline:none; border-bottom:1px solid var(--stamp); }
+  .mini-field{ display:flex; align-items:center; gap:5px; font-size:11px; color:var(--ink-soft); font-family:'JetBrains Mono', monospace; }
+  .mini-field input{
+    width:46px; font-family:'JetBrains Mono', monospace; font-size:12px; text-align:right;
+    border:1px solid var(--rule-strong); background:var(--paper-raised); padding:4px; border-radius:2px; color:var(--ink);
+  }
+  .mini-field input:focus{ outline:none; border-color:var(--stamp); }
+  .cat-pct{ font-family:'JetBrains Mono', monospace; font-weight:700; font-size:15px; margin-left:auto; }
+  table{ width:100%; border-collapse:collapse; }
+  thead th{
+    text-align:left; font-size:10px; letter-spacing:0.5px; text-transform:uppercase;
+    color:var(--ink-soft); font-weight:600; padding:0 6px 6px 0; border-bottom:1px solid var(--rule-strong);
+  }
+  thead th.num{ text-align:right; }
+  thead th.chk{ text-align:center; width:36px; }
+  tbody td{ padding:6px 6px 6px 0; border-bottom:1px solid var(--rule); vertical-align:middle; font-size:13px; }
+  tr.hypo td{ font-style:italic; color:var(--ink-soft); }
+  input[type="text"].asn, input[type="number"]{
+    font-family:'Inter',sans-serif; font-size:13px; border:none; border-bottom:1px dashed var(--rule-strong);
+    background:transparent; color:inherit; padding:3px 2px; width:100%;
+  }
+  input[type="number"]{ font-family:'JetBrains Mono', monospace; text-align:right; }
+  input:focus{ outline:none; border-bottom:1px solid var(--stamp); }
+  td.num{ text-align:right; width:70px; }
+  td.name{ min-width:130px; }
+  td.chk{ text-align:center; width:36px; }
+  td.pct{ font-family:'JetBrains Mono', monospace; text-align:right; width:56px; color:var(--ink-soft); font-size:12px; }
+  td.del{ width:24px; text-align:center; }
+  .del-btn{ background:none; border:none; color:var(--ink-soft); cursor:pointer; font-size:15px; font-family:serif; padding:2px 6px; }
+  .del-btn:hover{ color:var(--stamp); }
+  .row-btns{ display:flex; gap:8px; margin-top:10px; }
+  .add-row, .add-cat{
+    background:none; border:1px dashed var(--rule-strong); color:var(--ink-soft);
+    font-family:'Inter',sans-serif; font-size:12px; padding:6px 12px; border-radius:2px; cursor:pointer;
+  }
+  .add-row:hover, .add-cat:hover{ border-color:var(--ink); color:var(--ink); }
+  .weight-note{ margin-top:6px; font-size:12px; color:var(--ink-soft); font-family:'JetBrains Mono', monospace; }
+  .weight-note.warn{ color:var(--stamp); }
+  .stamp-row{ display:flex; align-items:center; gap:26px; margin-top:6px; flex-wrap:wrap; }
+  .stamp{
+    width:104px; height:104px; border:3px double var(--stamp); border-radius:50%;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    transform:rotate(-6deg); color:var(--stamp); flex-shrink:0;
+  }
+  .stamp .grade-letter{ font-family:'Special Elite', monospace; font-size:28px; line-height:1; }
+  .stamp .grade-pct{ font-family:'JetBrains Mono', monospace; font-size:11px; margin-top:4px; }
+  .stamp-caption{ font-size:13px; color:var(--ink-soft); max-width:260px; }
+  .stamp-caption b{ color:var(--ink); font-weight:600; }
+  .trend{ flex:1; min-width:180px; }
+  .trend-label{ font-size:11px; color:var(--ink-soft); font-family:'JetBrains Mono', monospace; margin-bottom:4px; }
+  .target-grid{ display:grid; grid-template-columns:1fr 1fr; gap:16px 20px; margin-bottom:18px; }
+  .field label{ display:block; font-size:11px; letter-spacing:0.5px; text-transform:uppercase; color:var(--ink-soft); margin-bottom:6px; }
+  .field input{
+    font-family:'JetBrains Mono', monospace; font-size:15px; border:1px solid var(--rule-strong);
+    background:var(--paper); padding:8px 10px; border-radius:2px; width:100%;
+  }
+  .field input:focus{ outline:none; border-color:var(--stamp); }
+  .result-box{ border-radius:2px; padding:16px 18px; font-size:14px; display:flex; align-items:flex-start; gap:10px; }
+  .result-box.ok{ background:var(--sage-bg); color:#33422F; }
+  .result-box.warn{ background:var(--ochre-bg); color:#4E3A15; }
+  .result-box.bad{ background:var(--stamp-bg); color:#5B2115; }
+  .result-box .big{ font-family:'JetBrains Mono', monospace; font-weight:700; font-size:20px; display:block; margin-bottom:2px; }
+  .code-row{ display:flex; gap:10px; margin-bottom:14px; }
+  .code-row textarea{
+    flex:1; font-family:'JetBrains Mono', monospace; font-size:11px; border:1px solid var(--rule-strong);
+    background:var(--paper); padding:8px; border-radius:2px; height:60px; resize:vertical; color:var(--ink);
+  }
+  .code-btn{
+    background:var(--paper); border:1px solid var(--rule-strong); color:var(--ink);
+    font-family:'Inter',sans-serif; font-size:12px; padding:0 14px; border-radius:2px; cursor:pointer;
+  }
+  .code-btn:hover{ border-color:var(--ink); }
+  .code-hint{ font-size:12px; color:var(--ink-soft); }
+  footer{ text-align:center; font-size:11px; color:var(--ink-soft); font-family:'JetBrains Mono', monospace; margin-top:10px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Ledger</h1>
+    <span class="ledger-no">grade calculator</span>
+  </header>
+
+  <div class="tabs" id="tabs"></div>
+
+  <div class="class-name-row">
+    <input type="text" id="className" placeholder="Class name">
+    <button class="del-class" id="delClass">remove class</button>
+  </div>
+
+  <section>
+    <p class="section-label">01 · Categories</p>
+    <h2>Weighted grade</h2>
+    <div id="categories"></div>
+    <button class="add-cat" id="addCat">+ add category</button>
+
+    <div class="stamp-row">
+      <div class="stamp"><span class="grade-letter" id="letterOut">—</span><span class="grade-pct" id="pctOut">—</span></div>
+      <p class="stamp-caption" id="stampCaption">Add a category and some assignments to see your grade.</p>
+      <div class="trend">
+        <div class="trend-label">trend this session</div>
+        <svg id="sparkline" width="100%" height="40" viewBox="0 0 200 40" preserveAspectRatio="none"></svg>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <p class="section-label">02 · What-if</p>
+    <h2>What do I need on the rest?</h2>
+    <div class="target-grid">
+      <div class="field"><label for="curGrade">Current overall grade (%)</label><input type="number" id="curGrade" placeholder="auto-filled"></div>
+      <div class="field"><label for="remWeight">Weight left to be graded (%)</label><input type="number" id="remWeight" placeholder="e.g. 20"></div>
+      <div class="field"><label for="targetGrade">Target overall grade (%)</label><input type="number" id="targetGrade" placeholder="e.g. 90"></div>
+    </div>
+    <div class="result-box" id="targetResult"><div>Fill in the fields above to see what score you need.</div></div>
+  </section>
+
+  <section>
+    <p class="section-label">03 · Save this ledger</p>
+    <h2>Copy a code to save it</h2>
+    <div class="code-row">
+      <textarea id="codeBox" readonly></textarea>
+      <button class="code-btn" id="copyCode">Copy</button>
+    </div>
+    <div class="code-row">
+      <textarea id="loadBox" placeholder="Paste a saved code here to load it back in"></textarea>
+      <button class="code-btn" id="loadCode">Load</button>
+    </div>
+    <p class="code-hint">Nothing here is saved automatically — paste this code somewhere (a note, Field Notes itself) and load it back in next time.</p>
+  </section>
+
+  <footer>everything runs in your browser — nothing is sent anywhere</footer>
+</div>
+
+<script>
+let uid = 1;
+const newId = () => uid++;
+
+function newAssignment(){ return { id:newId(), name:'', earned:'', possible:'', hypo:false }; }
+function newCategory(name, weight){
+  return { id:newId(), name, weight, assignments:[newAssignment()] };
+}
+function newClass(name){
+  return {
+    id:newId(),
+    name,
+    categories:[ newCategory('Homework', 20), newCategory('Tests', 50), newCategory('Final exam', 30) ],
+    history:[]
+  };
+}
+
+let state = { classes:[ newClass('Class 1') ], activeId:null };
+state.activeId = state.classes[0].id;
+
+let curGradeAuto = true;
+
+function activeClass(){ return state.classes.find(c => c.id === state.activeId); }
+
+function letterFor(pct){
+  if(pct >= 93) return 'A';
+  if(pct >= 90) return 'A-';
+  if(pct >= 87) return 'B+';
+  if(pct >= 83) return 'B';
+  if(pct >= 80) return 'B-';
+  if(pct >= 77) return 'C+';
+  if(pct >= 73) return 'C';
+  if(pct >= 70) return 'C-';
+  if(pct >= 67) return 'D+';
+  if(pct >= 60) return 'D';
+  return 'F';
+}
+function colorFor(pct){
+  if(pct >= 90) return '#4F6B48';
+  if(pct >= 75) return '#96702C';
+  return '#A54428';
+}
+
+function categoryResult(cat){
+  const graded = cat.assignments.filter(a => a.possible !== '' && Number(a.possible) > 0 && a.earned !== '');
+  const earnedSum = graded.reduce((s, a) => s + Number(a.earned), 0);
+  const possibleSum = graded.reduce((s, a) => s + Number(a.possible), 0);
+  return { pct: possibleSum > 0 ? (earnedSum / possibleSum * 100) : null, graded: possibleSum > 0 };
+}
+
+function renderTabs(){
+  const tabs = document.getElementById('tabs');
+  tabs.innerHTML = '';
+  state.classes.forEach(c => {
+    const btn = document.createElement('button');
+    btn.className = 'tab' + (c.id === state.activeId ? ' active' : '');
+    btn.textContent = c.name || 'Untitled';
+    btn.addEventListener('click', () => { state.activeId = c.id; curGradeAuto = true; renderAll(); });
+    tabs.appendChild(btn);
+  });
+  const add = document.createElement('button');
+  add.className = 'tab-add';
+  add.textContent = '+ class';
+  add.addEventListener('click', () => {
+    const c = newClass('New class');
+    state.classes.push(c);
+    state.activeId = c.id;
+    curGradeAuto = true;
+    renderAll();
+  });
+  tabs.appendChild(add);
+}
+
+function renderClassHeader(){
+  const c = activeClass();
+  document.getElementById('className').value = c.name;
+  document.getElementById('delClass').style.visibility = state.classes.length > 1 ? 'visible' : 'hidden';
+}
+
+function renderCategories(){
+  const c = activeClass();
+  const wrap = document.getElementById('categories');
+  wrap.innerHTML = '';
+
+  c.categories.forEach(cat => {
+    const box = document.createElement('div');
+    box.className = 'category';
+
+    const head = document.createElement('div');
+    head.className = 'cat-head';
+    head.innerHTML = `
+      <input type="text" value="${cat.name}" data-cat="${cat.id}" data-field="name">
+      <span class="mini-field">weight <input type="number" value="${cat.weight}" data-cat="${cat.id}" data-field="weight" min="0" max="100">%</span>
+      <button class="del-btn" data-delcat="${cat.id}" aria-label="Remove category">×</button>
+      <span class="cat-pct" data-catpct="${cat.id}"></span>
+    `;
+    box.appendChild(head);
+
+    const table = document.createElement('table');
+    table.innerHTML = `
+      <thead><tr>
+        <th>Assignment</th><th class="num">Earned</th><th class="num">Possible</th>
+        <th class="chk">?</th><th class="num">%</th><th></th>
+      </tr></thead>
+      <tbody></tbody>
+    `;
+    const tbody = table.querySelector('tbody');
+    cat.assignments.forEach(a => {
+      const hasScore = a.possible !== '' && Number(a.possible) > 0 && a.earned !== '';
+      const pct = hasScore ? (Number(a.earned) / Number(a.possible) * 100) : null;
+      const tr = document.createElement('tr');
+      if(a.hypo) tr.classList.add('hypo');
+      tr.innerHTML = `
+        <td class="name"><input type="text" class="asn" value="${a.name}" data-cat="${cat.id}" data-a="${a.id}" data-f="name" placeholder="untitled"></td>
+        <td class="num"><input type="number" value="${a.earned}" data-cat="${cat.id}" data-a="${a.id}" data-f="earned"></td>
+        <td class="num"><input type="number" value="${a.possible}" data-cat="${cat.id}" data-a="${a.id}" data-f="possible"></td>
+        <td class="chk"><input type="checkbox" ${a.hypo ? 'checked' : ''} data-cat="${cat.id}" data-a="${a.id}" data-f="hypo"></td>
+        <td class="pct">${pct !== null ? pct.toFixed(1) + '%' : '—'}</td>
+        <td class="del"><button class="del-btn" data-delasn="${cat.id}:${a.id}" aria-label="Remove assignment">×</button></td>
+      `;
+      tbody.appendChild(tr);
+    });
+    table.appendChild(tbody);
+    box.appendChild(table);
+
+    const btns = document.createElement('div');
+    btns.className = 'row-btns';
+    const addBtn = document.createElement('button');
+    addBtn.className = 'add-row';
+    addBtn.textContent = '+ assignment';
+    addBtn.addEventListener('click', () => { cat.assignments.push(newAssignment()); renderCategories(); compute(); });
+    btns.appendChild(addBtn);
+    box.appendChild(btns);
+
+    wrap.appendChild(box);
+  });
+
+  wrap.querySelectorAll('input').forEach(inp => {
+    inp.addEventListener('input', handleFieldInput);
+    if(inp.type === 'checkbox') inp.addEventListener('change', handleFieldInput);
+  });
+  wrap.querySelectorAll('[data-delcat]').forEach(b => b.addEventListener('click', () => {
+    const cid = Number(b.dataset.delcat);
+    const c = activeClass();
+    c.categories = c.categories.filter(cat => cat.id !== cid);
+    renderCategories(); compute();
+  }));
+  wrap.querySelectorAll('[data-delasn]').forEach(b => b.addEventListener('click', () => {
+    const [cid, aid] = b.dataset.delasn.split(':').map(Number);
+    const cat = activeClass().categories.find(cc => cc.id === cid);
+    cat.assignments = cat.assignments.filter(a => a.id !== aid);
+    renderCategories(); compute();
+  }));
+}
+
+function handleFieldInput(e){
+  const cid = Number(e.target.dataset.cat);
+  const cat = activeClass().categories.find(c => c.id === cid);
+  if(!cat) return;
+  const field = e.target.dataset.field;
+  const f = e.target.dataset.f;
+  if(field){
+    cat[field] = field === 'name' ? e.target.value : e.target.value;
+  } else if(f){
+    const aid = Number(e.target.dataset.a);
+    const a = cat.assignments.find(x => x.id === aid);
+    if(!a) return;
+    if(e.target.type === 'checkbox'){ a[f] = e.target.checked; }
+    else { a[f] = e.target.value; }
+  }
+  compute();
+  if(field === 'name' || f === 'name'){ return; }
+  renderCategories();
+}
+
+function renderSparkline(){
+  const c = activeClass();
+  const svg = document.getElementById('sparkline');
+  const pts = c.history.slice(-24);
+  if(pts.length < 2){ svg.innerHTML = ''; return; }
+  const min = Math.min(...pts, 60);
+  const max = Math.max(...pts, 100);
+  const range = Math.max(max - min, 1);
+  const w = 200, h = 40, pad = 4;
+  const coords = pts.map((v, i) => {
+    const x = pad + (i / (pts.length - 1)) * (w - pad * 2);
+    const y = h - pad - ((v - min) / range) * (h - pad * 2);
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  });
+  const color = colorFor(pts[pts.length - 1]);
+  svg.innerHTML = `<polyline points="${coords.join(' ')}" fill="none" stroke="${color}" stroke-width="1.5" />`;
+}
+
+function compute(){
+  const c = activeClass();
+  let weightedSum = 0, weightCounted = 0, totalWeight = 0;
+
+  c.categories.forEach(cat => {
+    const w = Number(cat.weight) || 0;
+    totalWeight += w;
+    const r = categoryResult(cat);
+    const pctSpan = document.querySelector(`[data-catpct="${cat.id}"]`);
+    if(pctSpan) pctSpan.textContent = r.pct !== null ? r.pct.toFixed(1) + '%' : '—';
+    if(r.graded){ weightedSum += r.pct * w; weightCounted += w; }
+  });
+
+  const noteEl = document.getElementById('weightNote') || null;
+  const roundedTotal = Math.round(totalWeight);
+
+  if(weightCounted === 0){
+    document.getElementById('letterOut').textContent = '—';
+    document.getElementById('pctOut').textContent = '—';
+    document.querySelector('.stamp').style.borderColor = '#A54428';
+    document.querySelector('.stamp').style.color = '#A54424';
+    document.getElementById('stampCaption').textContent = 'Add a category and some assignments to see your grade.';
+    if(curGradeAuto) document.getElementById('curGrade').value = '';
+    computeTarget();
+    return;
+  }
+
+  const overall = weightedSum / weightCounted;
+  const rounded = Math.round(overall * 10) / 10;
+  const color = colorFor(overall);
+
+  document.getElementById('letterOut').textContent = letterFor(overall);
+  document.getElementById('pctOut').textContent = rounded + '%';
+  document.querySelector('.stamp').style.borderColor = color;
+  document.querySelector('.stamp').style.color = color;
+
+  const remaining = 100 - weightCounted;
+  const weightWarn = roundedTotal !== 100 ? ` Category weights add to ${roundedTotal}% (should be 100%).` : '';
+  document.getElementById('stampCaption').innerHTML = (remaining > 0.5
+    ? `Based on <b>${Math.round(weightCounted)}%</b> of the grade so far. <b>${Math.round(remaining)}%</b> is still ungraded.`
+    : `That's your full grade — every category is filled in.`) + weightWarn;
+
+  if(curGradeAuto) document.getElementById('curGrade').value = rounded;
+  const remInput = document.getElementById('remWeight');
+  if(remInput.value === '' && remaining > 0.5) remInput.value = Math.round(remaining);
+
+  const last = c.history[c.history.length - 1];
+  if(last === undefined || Math.abs(last - rounded) > 0.05){
+    c.history.push(rounded);
+  }
+  renderSparkline();
+  computeTarget();
+}
+
+function computeTarget(){
+  const cur = parseFloat(document.getElementById('curGrade').value);
+  const rem = parseFloat(document.getElementById('remWeight').value);
+  const target = parseFloat(document.getElementById('targetGrade').value);
+  const box = document.getElementById('targetResult');
+
+  if(isNaN(cur) || isNaN(rem) || isNaN(target) || rem <= 0){
+    box.className = 'result-box';
+    box.innerHTML = '<div>Fill in the fields above to see what score you need.</div>';
+    return;
+  }
+
+  const graded = 100 - rem;
+  const needed = (target - (cur * graded / 100)) / (rem / 100);
+
+  let cls, msg;
+  if(needed > 100){
+    cls = 'bad';
+    msg = `Not reachable with what's left — even a perfect score on the remaining ${rem}% tops out at <b>${Math.round((cur * graded / 100) + rem)}%</b> overall.`;
+  } else if(needed < 0){
+    cls = 'ok';
+    msg = `Already there. You could score <b>0%</b> on the rest and still land above ${target}%.`;
+  } else {
+    cls = needed > 85 ? 'warn' : 'ok';
+    msg = `on the remaining ${rem}% of your grade to reach ${target}% overall.`;
+  }
+  box.className = 'result-box ' + cls;
+  box.innerHTML = (needed >= 0 && needed <= 100)
+    ? `<div><span class="big">${Math.round(needed * 10) / 10}%</span>${msg}</div>`
+    : `<div>${msg}</div>`;
+}
+
+function encodeState(){
+  return btoa(unescape(encodeURIComponent(JSON.stringify({ classes: state.classes, activeId: state.activeId, uid }))));
+}
+function refreshCode(){
+  document.getElementById('codeBox').value = encodeState();
+}
+
+document.getElementById('className').addEventListener('input', e => {
+  activeClass().name = e.target.value;
+  renderTabs();
+});
+document.getElementById('delClass').addEventListener('click', () => {
+  if(state.classes.length <= 1) return;
+  state.classes = state.classes.filter(c => c.id !== state.activeId);
+  state.activeId = state.classes[0].id;
+  curGradeAuto = true;
+  renderAll();
+});
+document.getElementById('addCat').addEventListener('click', () => {
+  activeClass().categories.push(newCategory('New category', 0));
+  renderCategories(); compute(); refreshCode();
+});
+document.getElementById('curGrade').addEventListener('input', () => {
+  curGradeAuto = document.getElementById('curGrade').value === '';
+  computeTarget();
+});
+document.getElementById('remWeight').addEventListener('input', computeTarget);
+document.getElementById('targetGrade').addEventListener('input', computeTarget);
+
+document.getElementById('copyCode').addEventListener('click', () => {
+  const box = document.getElementById('codeBox');
+  box.select();
+  document.execCommand('copy');
+});
+document.getElementById('loadCode').addEventListener('click', () => {
+  const raw = document.getElementById('loadBox').value.trim();
+  if(!raw) return;
+  try{
+    const data = JSON.parse(decodeURIComponent(escape(atob(raw))));
+    state.classes = data.classes;
+    state.activeId = data.activeId;
+    uid = data.uid || (Math.max(...data.classes.flatMap(c => [c.id, ...c.categories.flatMap(cat => [cat.id, ...cat.assignments.map(a=>a.id)])])) + 1);
+    curGradeAuto = true;
+    document.getElementById('remWeight').value = '';
+    renderAll();
+  } catch(err){
+    alert("That code didn't load — check it was copied in full.");
+  }
+});
+
+function renderAll(){
+  renderTabs();
+  renderClassHeader();
+  renderCategories();
+  compute();
+  refreshCode();
+}
+
+// keep code box in sync on any change
+const origCompute = compute;
+compute = function(){ origCompute(); refreshCode(); };
+
+renderAll();
+</script>
+</body>
+</html>
