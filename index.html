@@ -154,9 +154,71 @@
   .code-btn:hover{ border-color:var(--ink); }
   .code-hint{ font-size:12px; color:var(--ink-soft); }
   footer{ text-align:center; font-size:11px; color:var(--ink-soft); font-family:'JetBrains Mono', monospace; margin-top:10px; }
+
+  #intro{
+    position:fixed; inset:0; z-index:50;
+    background:var(--paper);
+    background-image:linear-gradient(var(--rule) 1px, transparent 1px);
+    background-size:100% 42px;
+    display:flex; align-items:center; justify-content:center;
+    padding:24px;
+    transition:opacity 0.6s ease;
+  }
+  #intro.fade{ opacity:0; pointer-events:none; }
+  .intro-card{
+    background:var(--paper-raised); border:1px solid var(--rule-strong); border-radius:2px;
+    box-shadow:0 1px 0 var(--rule); max-width:420px; width:100%;
+    padding:30px 30px 24px; text-align:left;
+  }
+  .intro-eyebrow{
+    font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:1.5px;
+    text-transform:uppercase; color:var(--ink-soft); margin:0 0 6px;
+  }
+  .intro-card h2{ font-family:'Special Elite', monospace; font-weight:400; font-size:20px; margin:0 0 12px; }
+  .intro-card p{ font-size:14px; color:var(--ink-soft); margin:0; min-height:66px; }
+  .intro-dots{ display:flex; gap:6px; margin:20px 0 22px; }
+  .intro-dots span{ width:6px; height:6px; border-radius:50%; background:var(--rule-strong); }
+  .intro-dots span.on{ background:var(--stamp); }
+  .intro-nav{ display:flex; align-items:center; justify-content:space-between; }
+  .intro-skip{
+    background:none; border:none; color:var(--ink-soft); font-family:'Inter',sans-serif;
+    font-size:13px; cursor:pointer; padding:6px 0;
+  }
+  .intro-skip:hover{ color:var(--ink); }
+  .intro-btns{ display:flex; gap:8px; }
+  .intro-btn{
+    font-family:'Inter',sans-serif; font-size:13px; padding:8px 16px; border-radius:2px; cursor:pointer;
+    border:1px solid var(--rule-strong); background:var(--paper);
+  }
+  .intro-btn:hover{ border-color:var(--ink); }
+  .intro-btn.primary{ background:var(--ink); color:var(--paper-raised); border-color:var(--ink); }
+  .intro-btn.primary:hover{ opacity:0.9; }
+  .intro-stamp{
+    width:40px; height:40px; border:2px double var(--stamp); border-radius:50%; color:var(--stamp);
+    display:flex; align-items:center; justify-content:center; font-family:'Special Elite', monospace;
+    font-size:14px; transform:rotate(-6deg); margin-bottom:14px;
+  }
 </style>
 </head>
 <body>
+
+<div id="intro">
+  <div class="intro-card">
+    <div class="intro-stamp">01</div>
+    <p class="intro-eyebrow">quick tour</p>
+    <h2 id="introTitle">Welcome to Ledger</h2>
+    <p id="introBody">A grade calculator that stays on your screen — nothing you type here gets sent anywhere. Four short steps, then it's yours.</p>
+    <div class="intro-dots" id="introDots"></div>
+    <div class="intro-nav">
+      <button class="intro-skip" id="introSkip">Skip</button>
+      <div class="intro-btns">
+        <button class="intro-btn" id="introBack">Back</button>
+        <button class="intro-btn primary" id="introNext">Next</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="wrap">
   <header>
     <h1>Ledger</h1>
@@ -556,6 +618,46 @@ const origCompute = compute;
 compute = function(){ origCompute(); refreshCode(); };
 
 renderAll();
+
+const introSteps = [
+  { stamp:'01', title:'Welcome to Ledger', body:"A grade calculator that stays on your screen — nothing you type here gets sent anywhere. Four short steps, then it's yours." },
+  { stamp:'02', title:'Categories & assignments', body:'Add a category for each part of your grade — homework, tests, whatever your class uses — and give it a weight. Inside, list each assignment\u2019s earned and possible points.' },
+  { stamp:'03', title:'Guess ahead with "?"', body:'Haven\u2019t taken something yet? Add it anyway and check the ? box. It still counts toward your grade so you can see how an upcoming score would move things, but it\u2019s marked as a guess.' },
+  { stamp:'04', title:'Multiple classes', body:'Use the tabs at the top to track more than one class. Each one keeps its own categories, assignments, and grade trend.' },
+  { stamp:'05', title:'Save what you\u2019ve got', body:'At the bottom, copy the code to save your numbers, and paste it back in any time to pick up where you left off.' }
+];
+let introStep = 0;
+
+function renderIntro(){
+  const s = introSteps[introStep];
+  document.querySelector('.intro-stamp').textContent = s.stamp;
+  document.getElementById('introTitle').textContent = s.title;
+  document.getElementById('introBody').textContent = s.body;
+  const dots = document.getElementById('introDots');
+  dots.innerHTML = introSteps.map((_, i) => `<span class="${i === introStep ? 'on' : ''}"></span>`).join('');
+  document.getElementById('introBack').style.visibility = introStep === 0 ? 'hidden' : 'visible';
+  document.getElementById('introNext').textContent = introStep === introSteps.length - 1 ? 'Start' : 'Next';
+}
+
+function closeIntro(){
+  const intro = document.getElementById('intro');
+  intro.classList.add('fade');
+  setTimeout(() => { intro.style.display = 'none'; }, 650);
+}
+
+document.getElementById('introNext').addEventListener('click', () => {
+  if(introStep === introSteps.length - 1){ closeIntro(); return; }
+  introStep++;
+  renderIntro();
+});
+document.getElementById('introBack').addEventListener('click', () => {
+  if(introStep === 0) return;
+  introStep--;
+  renderIntro();
+});
+document.getElementById('introSkip').addEventListener('click', closeIntro);
+
+renderIntro();
 </script>
 </body>
 </html>
